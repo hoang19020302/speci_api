@@ -14,6 +14,7 @@ const cx = classNames.bind(styles);
 
 function GroupResults() {
     const idUser = useSelector(selectUserId);
+    console.log(idUser);
     const navigate = useNavigate();
     const [totalResult, setTotalResult] = useState();
     const [currentPage, setCurrentPage] = useState(1);

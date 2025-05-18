@@ -41,6 +41,11 @@ const itemNavbarPath2 = [
     },
     {
         ID: 5,
+        title: 'Trang quản trị',
+        path: 'https://speciapi.fun/admin',
+    },
+    {
+        ID: 6,
         title: 'Logout',
         path: null,
         icon: IoIosLogOut,

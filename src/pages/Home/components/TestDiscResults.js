@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 
 function DiscResults({ currentPage, postsPerPage, setTotalResult }) {
     const IdUser = useSelector(selectUserId);
+    console.log(IdUser);
     const prefetchGetPersonalResults = usePrefetch('getPersonalResults', {
         ifOlderThan: 1,
     });

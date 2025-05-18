@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import classNames from 'classnames/bind';
 import styles from '../styles/authStyles.module.scss';
 
 import { BgrMain, ModalComp } from '../../../conponents';
 import { FcGoogle } from 'react-icons/fc';
+import { FaFacebook } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { InputCpn, ButtonCpn, Header, Line, LoaderIcon } from '../../../conponents';
 
@@ -39,7 +40,20 @@ function Register() {
             ...formData,
             [name]: value,
         });
+
+        if (errors[name]) {
+            setErrors({
+                ...errors,
+                [name]: null,
+            });
+        }
     };
+
+    useEffect(() => {
+        if (userRegisterResponse.isError) {
+            setErrors({ server: 'Đăng ký không thành công, vui lòng thử lại.' });
+        }
+    }, [userRegisterResponse.isError]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -86,6 +100,9 @@ function Register() {
                         alert(`${data.data.message}. Vui lòng thay đổi email đăng ký`);
                     }, [1000]);
                 }
+            })
+            .catch(() => {
+                setErrors({ server: 'Không thể kết nối đến máy chủ, vui lòng kiểm tra mạng!' });
             });
         }
     };
@@ -98,11 +115,15 @@ function Register() {
         <BgrMain isVerticalAlignment onSubmit={handleSubmit} className={cx('formRegister')}>
             <Header title={'đăng ký'} />
             <Line width={'25rem'} styles={{ marginBottom: '3rem' }} />
-            <ButtonCpn button1>
+            <ButtonCpn button1 to={process.env.REACT_APP_GOOGLE_LOGIN}>
                 <FcGoogle className={cx('icon')} />
                 đăng nhập với google
             </ButtonCpn>
-            <p className={cx('text')}>Mẹo: Đăng nhập nhanh hơn với Google</p>
+            <ButtonCpn button1 to={process.env.REACT_APP_FACEBOOK_LOGIN}>
+                <FaFacebook className={cx('icon', 'facebook-icon')} />
+                đăng nhập với facebook
+            </ButtonCpn>
+            <p className={cx('text')}>Mẹo: Đăng nhập nhanh hơn với Google và Facebook</p>
             <div className={cx('separation')}>
                 <Line width={'13rem'} isLine1 />
                 <p>hoặc</p>
@@ -163,9 +184,10 @@ function Register() {
                 disabled={userRegisterResponse.isLoading}
             >
                 {userRegisterResponse.isLoading && <LoaderIcon className={cx('loaderIcon')} />}
-
                 <span>đăng ký</span>
             </ButtonCpn>
+
+            {errors.server && <p className={cx('server-error')}>{errors.server}</p>}
 
             <div className={cx('authItem')}>
                 <p>Bạn đã có tài khoản?</p>

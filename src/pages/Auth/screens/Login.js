@@ -5,20 +5,22 @@ import styles from '../styles/authStyles.module.scss';
 
 import { BgrMain } from '../../../conponents';
 import { FcGoogle } from 'react-icons/fc';
+import { FaFacebook } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { InputCpn, ButtonCpn, Header, Line, LoaderIcon } from '../../../conponents';
 
 import { testEmail, testPassword } from '../../../hooks/hocks';
 import { authPath } from '../../../Router/paths';
 
-import { useGetUesrProfileGoogleQuery, useUserLoginMutation } from '../../../store/api';
+import { useGetUserProfileSocialQuery, useUserLoginMutation } from '../../../store/api';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectUserProfile, updateUserInfo } from '../../../store/apiSlice';
+import { selectUserProfile, updateUserInfo, logout } from '../../../store/apiSlice';
 
 import { privatePath } from '../../../Router/paths';
 
-const cx = classNames.bind(styles);
+import { getTokenFromCookie, decodeToken } from '../../../pages/Auth/Helper/Helper';
 
+const cx = classNames.bind(styles);
 function Login() {
     const navigate = useNavigate();
     const location = useLocation();
@@ -29,22 +31,47 @@ function Login() {
     });
 
     const [errors, setErrors] = useState({});
-
     const [userLogin, userLoginResponse] = useUserLoginMutation();
-    const { data } = useGetUesrProfileGoogleQuery({ method: 'google', type: 'existing' });
     const auth = useSelector(selectUserProfile);
 
+    // Xử lý thay đổi dữ liệu form
     const handleChange = (e) => {
         const { name, value } = e.target;
-
         setFormData({
             ...formData,
             [name]: value,
         });
+
+        if (errors[name]) {
+            setErrors({
+                ...errors,
+                [name]: null,
+            });
+        }
     };
 
-    const handleSubmit = (e) => {
+    // Xử lý thành công login
+    const handleLoginSuccess = (token) => {
+        const userInfo = decodeToken(token);
+        if (userInfo?.UserID) {
+            localStorage.setItem("user_profile", JSON.stringify(userInfo));
+            localStorage.setItem("id_user", userInfo?.UserID);
+            localStorage.setItem("is_login", true);
+
+            dispatch(
+                updateUserInfo({
+                    idUser: userInfo?.UserID,
+                    userProfile: userInfo,
+                })
+            );
+            navigate(`${privatePath.personalResults}?type=1`);
+        }
+    };
+
+    // Xử lý submit form login thông thường
+    const handleSubmit = async (e) => {
         e.preventDefault();
+
         const validationErrors = {};
         if (!formData.userName.trim()) {
             validationErrors.email = 'Vui lòng nhập Email';
@@ -61,35 +88,28 @@ function Login() {
         setErrors(validationErrors);
 
         if (Object.keys(validationErrors).length === 0) {
-            userLogin(formData).then((data) => {
-                if (data?.data.status !== 1) {
-                    alert(data?.data.message);
+            try {
+                const data = await userLogin(formData).unwrap();
+                if (data?.status !== 1) {
+                    setErrors({ server: data?.message || 'Đã xảy ra lỗi, vui lòng thử lại sau!' });
                 }
-            });
+            } catch (error) {
+                setErrors({ server: 'Không thể kết nối đến máy chủ, vui lòng kiểm tra mạng!' });
+            }
         }
     };
 
-    // useEffect(() => {
-    //     if (data?.userInfo) {
-    //         console.log(4444, data?.userInfo[0]);
-    //         localStorage.setItem('user_profile', JSON.stringify(data?.userInfo[0]));
-    //         localStorage.setItem('id_user', data?.userInfo[0].userID);
-
-    //         dispatch(
-    //             updateUserInfo({
-    //                 idUser: data?.userInfo[0].userID,
-    //                 userProfile: data?.userInfo[0],
-    //             }),
-    //         );
-    //     }
-    // }, [data]);
-
+    // Xử lý login qua Google (nếu token có sẵn trong cookie)
     useEffect(() => {
-        // console.log(44, auth, localStorage.getItem('id_user'));
-        // Navigate to home page if authenticated
-        if (Object.values(auth).length !== 0) {
-            // console.log(888, localStorage.getItem('id_user'));
+        if (auth && Object.keys(auth).length > 0) {
+            console.log(auth);
             navigate(`${privatePath.personalResults}?type=1`);
+        } else {
+            const token = getTokenFromCookie('user_info');
+            if (token) {
+                console.log(token);
+                handleLoginSuccess(token);
+            }
         }
     }, [auth]);
 
@@ -97,11 +117,15 @@ function Login() {
         <BgrMain isVerticalAlignment onSubmit={handleSubmit}>
             <Header title={'đăng nhập'} />
             <Line width={'25rem'} styles={{ marginBottom: '4rem' }} />
-            <ButtonCpn button1 to={'http://127.0.0.1:8000/auth/google/login?token=c3BlY2kxMjM='}>
+            <ButtonCpn button1 to={process.env.REACT_APP_GOOGLE_LOGIN}>
                 <FcGoogle className={cx('icon')} />
                 đăng nhập với google
             </ButtonCpn>
-            <p className={cx('text')}>Mẹo: Đăng nhập nhanh hơn với Google</p>
+            <ButtonCpn button1 to={process.env.REACT_APP_FACEBOOK_LOGIN}>
+                <FaFacebook className={cx('icon', 'facebook-icon')} />
+                đăng nhập với facebook
+            </ButtonCpn>
+            <p className={cx('text')}>Mẹo: Đăng nhập nhanh hơn với Google và Facebook</p>
             <div className={cx('separation')}>
                 <Line width={'13rem'} isLine1 />
                 <p>hoặc</p>
@@ -141,11 +165,16 @@ function Login() {
                 <span>đăng nhập</span>
             </ButtonCpn>
 
+            {errors.server && <p className={cx('server-error')}>{errors.server}</p>}
+
             <div className={cx('authItem')}>
                 <p>Bạn chưa có tài khoản?</p>
                 <Link to={authPath.register} className={cx('link')}>
                     Đăng ký
                 </Link>
+            </div>
+            <div className={cx('authItem')}>
+                <a href="https://speciapi.fun/reset-password" className={cx('link')}>Quên mật khẩu?</a>
             </div>
         </BgrMain>
     );

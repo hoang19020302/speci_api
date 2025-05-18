@@ -7,7 +7,7 @@ export const userApi = createApi({
     // Cấu hình chung cho tất cả request
     baseQuery: fetchBaseQuery({
         baseUrl: process.env.REACT_APP_API_URL,
-
+        credentials: 'include',  // Đảm bảo gửi cookie với mỗi yêu cầu
         prepareHeaders: (headers, { getState }) => {
             // getState() giúp lấy ra toàn bộ state trong store
             // getState().user lấy ra state trong userSlice
@@ -132,10 +132,10 @@ export const userApi = createApi({
             },
         }),
 
-        getUesrProfileGoogle: builder.query({
+        getUserProfileSocial: builder.query({
             query: (params) => {
                 return {
-                    url: 'google/user-info',
+                    url: 'social/user-info',
                     params: params,
                 };
             },
@@ -169,6 +169,6 @@ export const {
     useGetQuestionWithIDBankQuery,
     useUserCreateGroupMutation,
     useUseEditPasswordMutation,
-    useGetUesrProfileGoogleQuery,
+    useGetUserProfileSocialQuery,
     useUserEditProfileMutation,
 } = userApi;

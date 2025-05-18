@@ -30,7 +30,7 @@ function CreateGroupScreen() {
     const [nameGroup, setNameGroup] = useState('');
     //exam test type
     const [testType, setTestType] = useState([1]);
-    console.log(999, testType);
+    //console.log(999, testType);
 
     //============== err mes ============
     //rule err name group

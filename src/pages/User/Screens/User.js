@@ -178,8 +178,6 @@ function UserScreen() {
             });
     };
 
-    console.log(3344, useInfomation);
-
     const handleShowBird = () => {
         dispatch(
             updateActivePerInfo({

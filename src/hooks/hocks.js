@@ -4,11 +4,11 @@ const testEmail = (email) => {
 };
 
 const testPassword = (password) => {
-    const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*()\-=+_])[\w!@#$%^&*()\-=+_]+$/;
+    const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[@$!%*?&])(?=.*[0-9])[\w@$!%*?&]+$/;
     if (password.length < 8) {
         return 'Mật khẩu phải chứa ít nhất 8 ký tự';
     } else if (!regex.test(password)) {
-        return 'Mật khẩu phải chứa ký tự đặc biệt, chữ viết hoa và chứ thường';
+        return 'Mật khẩu phải chứa ký tự đặc biệt, chữ viết hoa, chữ viết thường và số';
     }
 
     return false;

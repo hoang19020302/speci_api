@@ -47,7 +47,7 @@ const apiSlice = createSlice({
             }
         });
 
-        builder.addMatcher(userApi.endpoints.getUesrProfileGoogle.matchFulfilled, (state, action) => {
+        builder.addMatcher(userApi.endpoints.getUserProfileSocial.matchFulfilled, (state, action) => {
             console.log(333, action.payload);
         });
 

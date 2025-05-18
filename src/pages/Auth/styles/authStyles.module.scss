@@ -5,6 +5,10 @@
     margin-left: -0.5rem;
 }
 
+.facebook-icon {
+    color: #1877F2;
+}
+
 .text {
     font-size: 1rem;
     color: var(--text-black-color);
@@ -107,4 +111,13 @@
 .loaderIcon {
     margin-right: 1rem;
     margin-left: -2.5rem;
+}
+
+.server-error {
+    color: var(--red-err-color);
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
+    text-align: center;
+    font-weight: 300;
+    margin-bottom: 2rem;
 }

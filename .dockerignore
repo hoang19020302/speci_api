@@ -1,0 +1,10 @@
+node_modules
+build
+.git
+.env
+.env.production
+README.md
+Dockerfile
+.gitignore
+.prettierrc
+yarn.lock
