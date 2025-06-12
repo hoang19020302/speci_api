@@ -56,10 +56,18 @@ pipeline {
 
     post {
         success {
-            echo "✅ Deployment successful! 🚀"
+            slackSend (
+                channel: '#ci-notifications',
+                message: "✅ Build *${env.JOB_NAME}* #${env.BUILD_NUMBER} succeeded",
+                color: 'good'
+            )
         }
         failure {
-            echo "❌ Deployment failed! 🔥"
+            slackSend (
+                channel: '#ci-notifications',
+                message: "❌ Build *${env.JOB_NAME}* #${env.BUILD_NUMBER} failed",
+                color: 'danger'
+            )
         }
     }
 }

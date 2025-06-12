@@ -7,6 +7,7 @@ RUN npm install
 COPY . .
 COPY .env.production .env
 RUN npm run build
+RUN ls -al build/
 
 # Stage 2: Nginx server
 FROM nginx:alpine
