@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from 'react-router';
+import { useLocation, useNavigate, matchPath, } from 'react-router';
 import { useState } from 'react';
 import classNames from 'classnames/bind';
 import styles from '../styles/homeStyles.module.scss';
@@ -10,11 +10,16 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { FaCaretDown } from 'react-icons/fa';
 
 const cx = classNames.bind(styles);
-
+const publicPaths = ['/group-test/:idGroup/test/:questionBankID', '/login', '/register', '/'];
+const isPublicRoute = (pathname) => {
+    return publicPaths.some((pattern) => matchPath(pattern, pathname));
+};
 function MainHome({ children }) {
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
     const navigate = useNavigate();
+    const isLoggedIn = JSON.parse(localStorage.getItem('is_login'));
+    const isPublic = isPublicRoute(location.pathname);
 
     const [open, setOpen] = useState(false);
     const [openModal, setOpenModal] = useState(false);
@@ -26,7 +31,24 @@ function MainHome({ children }) {
 
     return (
         <BgrMain className={cx('container')} isHomeScreen isVerticalAlignment>
-            {JSON.parse(localStorage.getItem('is_login')) ? (
+            {!isLoggedIn && !isPublic ? (
+                <div className={cx('mainNotLogin')}>
+                    {children}
+                    <div className={cx('content')}>
+                        <h3>Đến màn hình login?</h3>
+                        <ButtonCpn to={authPath.login} button2 style={{ marginTop: '2rem', width: '18rem' }}>
+                            <span>đăng nhập</span>
+                        </ButtonCpn>
+
+                        <div className={cx('authItem')}>
+                            <p>Bạn chưa có tài khoản?</p>
+                            <Link to={authPath.register} className={cx('link')}>
+                                Đăng ký
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            ) : (
                 <>
                     <div className={cx('boxSelect')}>
                         <ButtonCpn button2 className={cx('btn')} onClick={() => setOpenModal(true)}>
@@ -109,23 +131,6 @@ function MainHome({ children }) {
                         </div>
                     </ModalComp>
                 </>
-            ) : (
-                <div className={cx('mainNotLogin')}>
-                    {children}
-                    <div className={cx('content')}>
-                        <h3>Đến màn hình login?</h3>
-                        <ButtonCpn to={authPath.login} button2 style={{ marginTop: '2rem', width: '18rem' }}>
-                            <span>đăng nhập</span>
-                        </ButtonCpn>
-
-                        <div className={cx('authItem')}>
-                            <p>Bạn chưa có tài khoản?</p>
-                            <Link to={authPath.register} className={cx('link')}>
-                                Đăng ký
-                            </Link>
-                        </div>
-                    </div>
-                </div>
             )}
         </BgrMain>
     );

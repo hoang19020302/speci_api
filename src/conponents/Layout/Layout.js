@@ -35,11 +35,11 @@ function Layout({ children }) {
                 dispatch(logout());
 
                 // Chuyển hướng về trang login
-                navigate(authPath.login);
+                navigate(authPath.login, { replace: true });
             }
         } catch (error) {
             console.error(error);
-            navigate(authPath.login);
+            navigate(authPath.login, { replace: true });
         }
     };
 

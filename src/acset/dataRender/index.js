@@ -31,6 +31,11 @@ const itemNavbarPath1 = [
         title: 'tạo nhóm',
         path: privatePath.createGroup,
     },
+    {
+        ID: 4,
+        title: 'Trang quản trị',
+        path: 'https://speciapi.fun/admin',
+    },
 ];
 
 const itemNavbarPath2 = [
@@ -41,11 +46,6 @@ const itemNavbarPath2 = [
     },
     {
         ID: 5,
-        title: 'Trang quản trị',
-        path: 'https://speciapi.fun/admin',
-    },
-    {
-        ID: 6,
         title: 'Logout',
         path: null,
         icon: IoIosLogOut,
