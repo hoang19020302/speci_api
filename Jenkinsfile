@@ -16,6 +16,14 @@ pipeline {
                     credentialsId: 'gitlab-ssh'
             }
         }
+       
+        stage('Generate .env.production') {
+            steps {
+                withCredentials([file(credentialsId: 'SPEC_FE_ENV_PROD', variable: 'ENV_PROD_CONTENT')]) {
+                    sh 'cp "$ENV_PROD_CONTENT" .env.production'
+                }
+            }
+        }
 
         stage('Build Docker Image') {
             steps {
