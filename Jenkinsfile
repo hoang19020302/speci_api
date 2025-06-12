@@ -5,7 +5,7 @@ pipeline {
         IMAGE_NAME = "speci_image"
         CONTAINER_NAME = "speci_container"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        PORT = "80"
+        PORT = "3000"
     }
 
     stages {
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Run Container') {
             steps {
-                sh 'docker run -d --name $CONTAINER_NAME -p $PORT:3000 $IMAGE_NAME:$IMAGE_TAG'
+                sh 'docker run -d --name $CONTAINER_NAME -p $PORT:80 $IMAGE_NAME:$IMAGE_TAG'
                 sh 'docker ps -a'
             }
         }
