@@ -35,15 +35,15 @@ function MainHome({ children }) {
                 <div className={cx('mainNotLogin')}>
                     {children}
                     <div className={cx('content')}>
-                        <h3>Đến màn hình login Jenkins?</h3>
+                        <h3>Đến màn hình đăng nhập Jenkins?</h3>
                         <ButtonCpn to={authPath.login} button2 style={{ marginTop: '2rem', width: '18rem' }}>
-                            <span>đăng nhập</span>
+                            <span>Đăng nhập</span>
                         </ButtonCpn>
 
                         <div className={cx('authItem')}>
                             <p>Bạn chưa có tài khoản?</p>
                             <Link to={authPath.register} className={cx('link')}>
-                                Đăng ký
+                                Đăng ký ngay
                             </Link>
                         </div>
                     </div>
