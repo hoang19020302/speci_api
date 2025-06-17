@@ -35,7 +35,7 @@ function MainHome({ children }) {
                 <div className={cx('mainNotLogin')}>
                     {children}
                     <div className={cx('content')}>
-                        <h3>Đến màn hình đăng nhập Jenkins?</h3>
+                        <h3>Đến màn hình đăng nhập Jenkins CI/CD?</h3>
                         <ButtonCpn to={authPath.login} button2 style={{ marginTop: '2rem', width: '18rem' }}>
                             <span>Đăng nhập</span>
                         </ButtonCpn>
