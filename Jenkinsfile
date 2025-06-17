@@ -1,5 +1,7 @@
 pipeline {
-    agent any
+    agent {
+        label 'docker-agent-test'
+    }
 
     environment {
         IMAGE_NAME = "speci_image"
