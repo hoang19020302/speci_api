@@ -31,7 +31,6 @@ pipeline {
             steps {
                 sh 'whoami'
                 sh 'ls -l /var/run/docker.sock || echo "No docker.sock found"'
-                sh 'groups || echo "no group command"'
             }
         }
 
