@@ -107,17 +107,39 @@ networks:
 ### 2. `web/Dockerfile`
 
 ```Dockerfile
+# Use official Python image as base
 FROM python:3.11-slim
+
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+
+# Set working directory
 WORKDIR /app
-RUN apt-get update && apt-get install -y build-essential libpq-dev netcat && rm -rf /var/lib/apt/lists/*
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    libpq-dev \
+    netcat \
+    curl \
+    && apt-get clean
+
+# Install pipenv or use requirements.txt
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
+
+# Copy Django project code
 COPY . .
+
+# Collect static files
 RUN python manage.py collectstatic --noinput
+
+# Copy entrypoint script
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Command
 ENTRYPOINT ["/entrypoint.sh"]
 ```
 
@@ -125,12 +147,6 @@ ENTRYPOINT ["/entrypoint.sh"]
 
 ```bash
 #!/bin/sh
-# Wait for Postgres
-while ! nc -z db 5432; do
-  echo "Waiting for PostgreSQL..."
-  sleep 1
-done
-
 # Apply database migrations
 python manage.py migrate --noinput
 
