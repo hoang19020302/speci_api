@@ -23,7 +23,7 @@ This guide explains how to deploy a Django-based web application using Docker an
 * Docker Engine installed on the server
 * Docker Compose v2
 * Domain name pointed to the server IP
-* Valid DNS records for the domain
+* Valid DNS records for the domain and subdomain
 * SSL certificates managed by Traefik (Let’s Encrypt)
 
 ---
@@ -33,10 +33,6 @@ This guide explains how to deploy a Django-based web application using Docker an
 ```bash
 project-root/
 ├── docker-compose.yml
-├── traefik/
-│   ├── traefik.yml
-│   ├── dynamic.yml
-│   └── acme.json
 ├── web/                # Django project folder
 │   ├── Dockerfile
 │   ├── entrypoint.sh
@@ -51,53 +47,100 @@ project-root/
 ### 1. `docker-compose.yml`
 
 ```yaml
-version: "3.8"
 services:
-  traefik:
-    image: traefik:v2.10
+  traefik-reverse-proxy:
+    image: traefik:v3.1
+    restart: always
     command:
-      - --providers.docker
-      - --entrypoints.web.address=:80
-      - --entrypoints.websecure.address=:443
-      - --certificatesresolvers.le.acme.tlschallenge=true
-      - --certificatesresolvers.le.acme.email=${LE_EMAIL}
-      - --certificatesresolvers.le.acme.storage=/letsencrypt/acme.json
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${LE_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
-      - ./traefik/acme.json:/letsencrypt/acme.json
+      - letsencrypt:/letsencrypt
       - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - webnet
 
-  db:
+  postgres:
     image: postgres:15-alpine
+    restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+     healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+        interval: 10s
+        retries: 5
+        timeout: 5s
+    networks:
+      - webnet
+
+  adminer:
+    image: adminer:standalone
+    labels:
+    - "traefik.enable=true"
+    - "traefik.http.routers.adminer.rule=Host(`${ADMINER_DOMAIN}`)"
+    - "traefik.http.routers.adminer.entrypoints=websecure"
+    - "traefik.http.routers.adminer.tls.certresolver=myresolver"
+    restart: always
+    environment:
+        - ADMINER_DEFAULT_SERVER=postgres
+    depends_on:
+        postgres:
+            condition: service_healthy
+    networks:
+        - webnet
+
+  redis:
+    image: redis:bookworm
+    restart: always
+    volumes:
+        - redis_data:/data
+    healthcheck:
+        test: [ "CMD", "redis-cli", "ping" ]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+    networks:
+        - webnet
 
   web:
     build: ./web
+    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=le"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
     depends_on:
-      - db
+        postgres:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      - REDIS_URL=redis://redis:6379
     volumes:
       - ./.env:/app/.env:ro
     networks:
       - webnet
 
 volumes:
-  db_data:
+  postgres_data:
+  letsencrypt:
+  redis_data:
 
 networks:
   webnet:
@@ -157,32 +200,14 @@ exec gunicorn your_project_name.wsgi:application \
   --timeout 120
 ```
 
-### 4. `traefik/traefik.yml`
-
-```yaml
-entryPoints:
-  web:
-    address: ":80"
-  websecure:
-    address: ":443"
-providers:
-  docker:
-    exposedByDefault: false
-certificatesResolvers:
-  le:
-    acme:
-      email:
-      storage: /letsencrypt/acme.json
-      tlsChallenge: {}
-```
-
-### 5. `.env`
+### 4. `.env`
 
 ```
 DOMAIN=your-domain.com
+ADMINER_DOMAIN=sub.your-domain.com
 DB_USER=postgres
 DB_PASSWORD=secret
-DB_NAME=postgres
+DB_NAME=my_postgres
 LE_EMAIL=you@example.com
 ```
 
@@ -191,23 +216,17 @@ LE_EMAIL=you@example.com
 ## Building and Running Containers
 
 1. Place all files as per the directory structure.
-2. Ensure `acme.json` is created and writable:
-
-   ```bash
-   touch traefik/acme.json
-   chmod 600 traefik/acme.json
-   ```
-3. Start services:
+2. Start services:
 
    ```bash
    docker-compose up -d --build
    ```
-4. Verify containers:
+3. Verify containers:
 
    ```bash
    docker-compose ps
    ```
-5. Access your app at `https://your-domain.com`.
+4. Access your app at `https://your-domain.com` and adminner at `https://sub.your-domain.com`
 
 ---
 
