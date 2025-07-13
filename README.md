@@ -15,6 +15,7 @@ This guide explains how to deploy a Django-based web application using Docker an
 7. [Scaling Services](#scaling-services)
 8. [Security Best Practices](#security-best-practices)
 9. [Cleanup](#cleanup)
+10. [Extending with Celery](#extending-with-celery)
 
 ---
 
@@ -79,7 +80,7 @@ services:
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-     healthcheck:
+    healthcheck:
         test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
         interval: 10s
         retries: 5
@@ -109,7 +110,7 @@ services:
     volumes:
         - redis_data:/data
     healthcheck:
-        test: [ "CMD", "redis-cli", "ping" ]
+        test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
         interval: 10s
         timeout: 5s
         retries: 5
@@ -123,7 +124,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.web.rule=Host(`${DOMAIN}`)"
       - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
+      - "traefik.http.routers.web.tls.certresolver=myresolver"
     depends_on:
         postgres:
             condition: service_healthy
@@ -136,6 +137,11 @@ services:
       - ./.env:/app/.env:ro
     networks:
       - webnet
+    #healthcheck:
+    #    test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+    #    interval: 10s
+    #    timeout: 5s
+    #    retries: 5
 
 volumes:
   postgres_data:
@@ -219,12 +225,12 @@ LE_EMAIL=you@example.com
 2. Start services:
 
    ```bash
-   docker-compose up -d --build
+   docker compose up -d --build
    ```
 3. Verify containers:
 
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 4. Access your app at `https://your-domain.com` and adminner at `https://sub.your-domain.com`
 
@@ -250,7 +256,7 @@ LE_EMAIL=you@example.com
 * To scale web app instances:
 
   ```bash
-  docker-compose up -d --scale web=3
+  docker compose up -d --scale web=3
   ```
 * Traefik will load balance between containers.
 
@@ -267,8 +273,34 @@ LE_EMAIL=you@example.com
 
 ## Cleanup
 
-* Stop containers: `docker-compose down`
-* Remove volumes (if needed): `docker-compose down -v`
+* Stop containers: `docker compose down`
+* Remove volumes (if needed): `docker compose down -v`
+
+---
+
+## Extending with Celery
+
+If you plan to use Celery for background task processing:
+
+* You already have Redis running as a message broker.
+* Simply add a new `worker` service in your `docker-compose.yml` like so:
+
+```yaml
+worker:
+  build: ./web
+  command: celery -A your_project_name worker --loglevel=info
+  depends_on:
+    redis:
+      condition: service_healthy
+    web:
+      condition: service_healthy
+  environment:
+    - REDIS_URL=redis://redis:6379
+  networks:
+    - webnet
+```
+
+> Replace `your_project_name` with your actual Django project name.
 
 ---
 
