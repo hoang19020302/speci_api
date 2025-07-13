@@ -206,6 +206,8 @@ exec gunicorn your_project_name.wsgi:application \
   --timeout 120
 ```
 
+> Replace `your_project_name` with your actual Django project name.
+
 ### 4. `.env`
 
 ```
@@ -301,6 +303,20 @@ worker:
 ```
 
 > Replace `your_project_name` with your actual Django project name.
+
+---
+
+### Optional: Logging
+
+If you want better debugging and log rotation, consider adding the following to each service in `docker-compose.yml`:
+
+```yaml
+logging:
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+```
 
 ---
 
